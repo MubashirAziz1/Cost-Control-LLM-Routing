@@ -1,0 +1,24 @@
+[project]
+name = "cost-control-router"
+version = "0.1.0"
+description = "Smart Model Router for cost-effective LLM routing based on prompt complexity"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.0.0",
+    "transformers>=4.41.2",
+    "torch>=2.3.1",
+    "openai>=1.3.0",
+    "python-dotenv>=1.0.0",
+    "flash_attn>=2.5.8",
+    "accelerate>=0.31.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
