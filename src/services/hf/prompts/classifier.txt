@@ -13,7 +13,8 @@ Definitions:
     Questions that require deep reasoning, multi-step analysis, advanced technical or domain-specific knowledge, or synthesis of multiple concepts.
 
 Rules:
-  - Output ONLY one label: simple, medium, or complex
+  - Do not Give the answer to the Query.
+  - Only Analyze the query and output must be among them: simple, medium, or complex
   - Do NOT provide explanations, reasoning, or additional text
   - Do NOT repeat the user prompt
   - Do NOT add punctuation or formatting
