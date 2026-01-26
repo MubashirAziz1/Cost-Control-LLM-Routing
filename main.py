@@ -13,6 +13,8 @@ def main():
     
     # Step 1: Classify the query
     classification_result = hf_client.classify(user_query)
+
+    print(classification_result)
     
     # Parse the classification result (it returns text, need to extract difficulty level)
     classification_lower = classification_result.lower().strip()
