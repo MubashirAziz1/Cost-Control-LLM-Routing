@@ -10,7 +10,7 @@ class GROQ_Client:
     
     def __init__(self, settings: Settings):
         """Initialize the classifier model."""
-        self.model_name = settings.models.CLASSIFIER
+        self.model_name = settings.models.MEDIUM
         self.api_key = settings.groq.API_KEY
     
     
@@ -38,6 +38,7 @@ class GROQ_Client:
                 }
                 ]
             )
+            return completion.choices[0].message.content.strip()
         except Exception as e:
             logger.error(f"Error during executing respose from model assigned to medium task: {e}")
             raise
