@@ -173,7 +173,7 @@ class HF_Client:
         self.model_name = settings.models.CLASSIFIER
         self.hf_token = settings.huggingface.TOKEN
         self.tokenizer = None
-        self.model = None  # Changed from pipe
+        self.model = None
         self.prompt_builder = PromptClassification()
         self._initialized = False
     
@@ -189,13 +189,18 @@ class HF_Client:
                 token=self.hf_token,
                 trust_remote_code=True
             )
+            
+            # Add padding token if not present
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
 
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 token=self.hf_token,
                 trust_remote_code=True,
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                dtype=torch.float16 if torch.cuda.is_available() else torch.float32,  # Changed from torch_dtype
                 device_map="auto" if torch.cuda.is_available() else None,
+                attn_implementation="eager",  # Use eager attention to avoid flash-attention issues
             )
 
             if not torch.cuda.is_available():
@@ -236,15 +241,16 @@ class HF_Client:
             )
             
             # Tokenize input
-            inputs = self.tokenizer(classification_prompt, return_tensors="pt")
+            inputs = self.tokenizer(classification_prompt, return_tensors="pt", padding=True)
             inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
             
-            # Generate
+            # Generate with use_cache=False to avoid DynamicCache issues
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
                     max_new_tokens=500,
                     do_sample=False,
+                    use_cache=False,  # CRITICAL: Disable caching
                     pad_token_id=self.tokenizer.pad_token_id,
                     eos_token_id=self.tokenizer.eos_token_id,
                 )
@@ -290,15 +296,16 @@ class HF_Client:
             )
             
             # Tokenize input
-            inputs = self.tokenizer(prompt, return_tensors="pt")
+            inputs = self.tokenizer(prompt, return_tensors="pt", padding=True)
             inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
             
-            # Generate
+            # Generate with use_cache=False
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
                     max_new_tokens=500,
                     do_sample=False,
+                    use_cache=False,  # CRITICAL: Disable caching
                     pad_token_id=self.tokenizer.pad_token_id,
                     eos_token_id=self.tokenizer.eos_token_id,
                 )
