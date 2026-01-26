@@ -7,7 +7,7 @@ def main():
     client = make_huggingface_client()
     
     # Get user query
-    user_query = "What is the capital of Pakistan?"
+    user_query = "If I have 3 apples and buy 5 more, then give away 2, how many do I have?"
     
     # Classify the query
     result = client.classify(user_query)
