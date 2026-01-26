@@ -7,7 +7,7 @@ def main():
     client = make_huggingface_client()
     
     # Get user query
-    user_query = "If I have 3 apples and buy 5 more, then give away 2, how many do I have?"
+    user_query = "If global temperatures rise 2°C, explain the cascading effects on ocean currents, weather patterns, and agriculture."
     
     # Classify the query
     result = client.classify(user_query)
