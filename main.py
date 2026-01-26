@@ -9,7 +9,7 @@ def main():
     groq_client = make_groq_client()
     
     # Get user query
-    user_query = "Alice is taller than Bob. Bob is taller than Charlie. Who is the shortest?"
+    user_query = "If I have 3 apples and buy 5 more, then give away 2, how many do I have?"
     
     # Step 1: Classify the query
     classification_result = hf_client.classify(user_query)
