@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Smart Model Router for cost-effective LLM routing based on prompt complexity"
 requires-python = ">=3.10"
 dependencies = [
+    "groq>=1.0.0",
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "pydantic>=2.5.0",
