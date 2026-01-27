@@ -2,6 +2,8 @@ import logging
 from contextlib import contextmanager
 from typing import Generator, Optional
 
+from pydantic import Field
+from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -23,6 +25,7 @@ class PostgreSQLSettings(BaseSettings):
 
     class Config:
         env_prefix = "POSTGRES_"
+
 
 Base = declarative_base()
 
