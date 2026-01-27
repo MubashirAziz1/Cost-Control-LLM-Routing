@@ -73,6 +73,10 @@ class Settings(BaseConfigSettings):
     environment: Literal["development", "staging", "production"] = "development"
     service_name: str = "Cost_Controlled_ChatBot"
 
+    postgres_database_url: str = "postgresql://user:password@localhost:5432/log_db"
+    postgres_echo_sql: bool = False
+    postgres_pool_size: int = 20
+    postgres_max_overflow: int = 0
 
     models: ModelSettings = Field(default_factory=ModelSettings)
     huggingface: HuggingFaceSettings = Field(default_factory=HuggingFaceSettings)
