@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from models.schemas import GenerateRequest, GenerateResponse
+from src.schemas.schemas import GenerateRequest, GenerateResponse
 from router.router import ModelRouter
 from config import LOG_LEVEL
 
