@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LLM Router</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+
+<style>
+  /* ─── reset & variables ────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:          #0c0e12;
+    --surface:     #141821;
+    --surface-hi:  #1c2030;
+    --border:      #2a2f3e;
+    --text:        #c8cdd8;
+    --text-dim:    #5a6070;
+    --accent:      #e8f04a;
+    --accent-dim:  rgba(232,240,74,.15);
+    --easy:        #4ade80;
+    --easy-bg:     rgba(74,222,128,.12);
+    --medium:      #fb923c;
+    --medium-bg:   rgba(251,146,60,.12);
+    --complex:     #f87171;
+    --complex-bg:  rgba(248,113,113,.12);
+    --radius:      10px;
+  }
+
+  html { font-size: 16px; }
+  body {
+    font-family: 'IBM Plex Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 20px 80px;
+    line-height: 1.6;
+  }
+
+  /* ─── layout shell ─────────────────────────────────────────────── */
+  .shell {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* ─── header ───────────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+    color: #fff;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .header h1 span { color: var(--accent); }
+  .header p {
+    font-size: .78rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+  }
+
+  /* ─── input card ───────────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+
+  textarea {
+    flex: 1;
+    resize: vertical;
+    min-height: 80px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: inherit;
+    font-size: .85rem;
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--text-dim); }
+
+  .btn {
+    flex-shrink: 0;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: 14px 24px;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    align-self: stretch;
+  }
+  .btn:hover { opacity: .85; }
+  .btn:active { transform: scale(.96); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+
+  /* ─── status bar ───────────────────────────────────────────────── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    min-height: 22px;
+  }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: none;
+  }
+  .spinner.active { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-text {
+    font-size: .75rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  /* ─── response card ────────────────────────────────────────────── */
+  .response-card {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeUp .3s ease;
+  }
+  .response-card.visible { display: flex; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* meta row: badge + model name */
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: 5px 10px;
+    border-radius: 20px;
+  }
+  .badge .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+  .badge.simple   { background: var(--easy-bg);    color: var(--easy);    }
+  .badge.simple .dot   { background: var(--easy); }
+  .badge.medium   { background: var(--medium-bg);  color: var(--medium);  }
+  .badge.medium .dot   { background: var(--medium); }
+  .badge.complex  { background: var(--complex-bg); color: var(--complex); }
+  .badge.complex .dot  { background: var(--complex); }
+
+  .model-tag {
+    font-size: .72rem;
+    color: var(--text-dim);
+  }
+
+  /* response text */
+  .response-text {
+    font-size: .88rem;
+    color: var(--text);
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* ─── error toast ──────────────────────────────────────────────── */
+  .error-toast {
+    display: none;
+    background: rgba(248,113,113,.1);
+    border: 1px solid rgba(248,113,113,.3);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: .78rem;
+    color: var(--complex);
+    animation: fadeUp .25s ease;
+  }
+  .error-toast.visible { display: block; }
+
+  /* ─── history ──────────────────────────────────────────────────── */
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .history-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .13em;
+    color: var(--text-dim);
+  }
+  .clear-btn {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: .7rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color .2s;
+  }
+  .clear-btn:hover { color: var(--complex); }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: fadeUp .2s ease;
+  }
+  .history-item .h-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .history-item .h-prompt {
+    font-size: .78rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-item .h-response {
+    font-size: .8rem;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* empty state */
+  .empty-state {
+    text-align: center;
+    padding: 28px 0;
+    color: var(--text-dim);
+    font-size: .75rem;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- header -->
+  <div class="header">
+    <h1>LLM <span>Router</span></h1>
+    <p>Cost-controlled model routing · classify → route → respond</p>
+  </div>
+
+  <!-- input -->
+  <div class="card">
+    <div class="input-row">
+      <textarea id="promptInput" placeholder="Ask me anything…" rows="3"></textarea>
+      <button class="btn" id="sendBtn">Send</button>
+    </div>
+    <div class="status-bar">
+      <div class="spinner" id="spinner"></div>
+      <span class="status-text" id="statusText"></span>
+    </div>
+  </div>
+
+  <!-- error -->
+  <div class="error-toast" id="errorToast"></div>
+
+  <!-- live response -->
+  <div class="response-card card" id="responseCard">
+    <div class="response-text" id="responseText"></div>
+  </div>
+
+  <!-- history -->
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <div class="history-header">
+      <h3>History</h3>
+      <button class="clear-btn" id="clearBtn">Clear</button>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="empty-state" id="emptyState">No previous queries yet.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── config ───────────────────────────────────────────────────────────────
+const API_URL = "http://127.0.0.1:8000/route";   // adjust if your prefix differs
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────
+const promptInput   = document.getElementById("promptInput");
+const sendBtn       = document.getElementById("sendBtn");
+const spinner       = document.getElementById("spinner");
+const statusText    = document.getElementById("statusText");
+const errorToast    = document.getElementById("errorToast");
+const responseCard  = document.getElementById("responseCard");
+const responseText  = document.getElementById("responseText");
+const historyList   = document.getElementById("historyList");
+const emptyState    = document.getElementById("emptyState");
+const clearBtn      = document.getElementById("clearBtn");
+
+// ─── in-memory history ────────────────────────────────────────────────────
+let history = [];
+
+// ─── helpers ──────────────────────────────────────────────────────────────
+function setLoading(on) {
+  sendBtn.disabled = on;
+  spinner.classList.toggle("active", on);
+}
+
+function showError(msg) {
+  errorToast.textContent = msg;
+  errorToast.classList.add("visible");
+  setTimeout(() => errorToast.classList.remove("visible"), 4000);
+}
+
+function hideResponse() {
+  responseCard.classList.remove("visible");
+  responseText.textContent = "";
+}
+
+function showResponse(data) {
+  responseText.textContent = data.llm_response || "";
+  responseCard.classList.add("visible");
+}
+
+function addToHistory(prompt, data) {
+  history.unshift({ prompt, ...data });
+  renderHistory();
+}
+
+function renderHistory() {
+  // remove old items (keep emptyState node)
+  [...historyList.querySelectorAll(".history-item")].forEach(el => el.remove());
+
+  if (history.length === 0) {
+    emptyState.style.display = "block";
+    return;
+  }
+  emptyState.style.display = "none";
+
+  history.forEach(item => {
+    const el = document.createElement("div");
+    el.className = "history-item";
+
+    el.innerHTML = `
+      <div class="h-prompt">${escHtml(item.prompt)}</div>
+      <div class="h-response">${escHtml(item.llm_response || "")}</div>
+    `;
+    historyList.appendChild(el);
+  });
+}
+
+function escHtml(s) {
+  const d = document.createElement("div");
+  d.appendChild(document.createTextNode(s));
+  return d.innerHTML;
+}
+
+// ─── send request ─────────────────────────────────────────────────────────
+async function send() {
+  const prompt = promptInput.value.trim();
+  if (!prompt) return;
+
+  setLoading(true);
+  hideResponse();
+  statusText.textContent = "Classifying & routing…";
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error ${res.status}`);
+    }
+
+    const data = await res.json();
+    statusText.textContent = "";
+    showResponse(data);
+    addToHistory(prompt, data);
+    promptInput.value = "";
+    promptInput.focus();
+
+  } catch (e) {
+    statusText.textContent = "";
+    showError(e.message || "Something went wrong.");
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ─── events ───────────────────────────────────────────────────────────────
+sendBtn.addEventListener("click", send);
+
+promptInput.addEventListener("keydown", (e) => {
+  // Shift+Enter → newline, plain Enter → send
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+
+clearBtn.addEventListener("click", () => {
+  history = [];
+  renderHistory();
+});
+</script>
+
+</body>
+</html>

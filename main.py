@@ -1,71 +1,76 @@
 """Simple interactive script that classifies each user message,
 routes it to a model, and logs the conversation to the database."""
 
-from src.services.hf.factory import make_huggingface_client
-from src.services.groq.factory import make_groq_client
-from src.services.ollama.factory import make_ollama_client
+import logging
+import os
+from contextlib import asynccontextmanager
 
-from src.database import get_db_session, get_database
-from src.repositories.request_log import LogsRepository
-from src.schemas.ai_model import LogsCreate
+import uvicorn
+from fastapi import FastAPI
+from src.config import get_settings
+from src.db.factory import make_database
+from src.router import ping, route
 
 
-def main():
-    """Initialize the database, then run one demo request and log it."""
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
-    # Explicitly initialize the database (creates engine, tables, etc.)
-    database = get_database()
-    # At this point PostgreSQLDatabase.startup() has been called via the factory
 
-    # Initialize model clients
-    #hf_client = make_huggingface_client()
-    groq_client = make_groq_client()
-    ollama_client = make_ollama_client()
-    print("Chat started (single demo run).")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan for the API.
+    """
+    logger.info("Starting RAG API...")
 
-    user_query = "If I have 3 apples and buy 5 more, then give away 2, how many do I have?"
+    settings = get_settings()
+    app.state.settings = settings
 
-    # 1) Classify
-    cls_text = ollama_client.classify(user_query)
-    cls_text = cls_text.lower().strip()
-    print(cls_text)
+    database = make_database()
+    app.state.database = database
+    logger.info("Database connected")
 
-    if cls_text == "simple":
-        difficulty = "simple"
-    elif cls_text =="medium":
-        difficulty = "medium"
-    elif cls_text == "complex" :
-        difficulty = "complex"
-    else:
-         difficulty = "medium"  # safe default
+    logger.info("API ready")
+    yield
 
-    print("..............")
-    print(difficulty)
-    # 2) Route to model
-    if difficulty == "simple":
-        response = ollama_client.easy_task(user_query)
-        model_name = "HF Model (Simple)"
-    elif difficulty == "medium":
-        response = groq_client.medium_task(user_query)
-        model_name = "Groq Model (Medium)"
-    else:
-        response = groq_client.medium_task(user_query)
-        model_name = "Groq Model (Complex)"
+    # Cleanup
+    database.teardown()
+    logger.info("API shutdown complete")
 
-    # 3) Log to DB using the initialized database
-    with get_db_session() as session:
-        repo = LogsRepository(session)
-        log = LogsCreate(
-            model_name=model_name,
-            difficulty=difficulty,
-            prompt=user_query,
-            llm_response=response,
-        )
-        repo.create(log)
 
-    # 4) Show reply
-    print(f"\nModel ({model_name}): {response}\n")
+app = FastAPI(
+    title="Cost Controlled LLM Router",
+    description="Cost Controlled Router for the agencies.",
+    version=os.getenv("APP_VERSION", "0.1.0"),
+    lifespan=lifespan,
+) 
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["POST"],
+    allow_headers=["Content-Type"],
+)
+
+
+# Include routers
+app.include_router(ping.router) 
+app.include_router(route.router) 
+
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
-    main()
+    uvicorn.run(app, port=8000, host="0.0.0.0")
+
+
+
+
+

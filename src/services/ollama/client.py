@@ -89,39 +89,27 @@ class Ollama_Client:
             return "medium"
 
     def easy_task(self, user_prompt: str) -> str:
-        """
-        Make a response to the user query.
-
-        Args:
-            user_prompt: User prompt
-            
-        Returns:
-            str: Response from the model.
-        """
         self._initialize_model()
 
         messages = [
-            {"role": "system", "content": "You are a helpful AI assistant."}, 
-            {"role": "user", "content": user_prompt}, 
+            {"role": "system", "content": "You are a helpful AI assistant."},
+            {"role": "user", "content": user_prompt},
         ]
-        full_response = ""   # ✅ accumulator
+        full_response = ""
 
         try:
-            # Generate response using Ollama
             stream = ollama.chat(
                 model=self.model_name,
                 messages=messages,
-                stream = True
+                stream=True,
             )
             for chunk in stream:
                 token = chunk["message"]["content"]
+                full_response += token          # accumulate silently
 
-                # Print live
-                print(token, end="", flush=True)
-                full_response += token
-
-            return full_response
+            logger.info(f"Ollama response ready ({len(full_response)} chars)")
+            return full_response               # router picks this up
 
         except Exception as e:
-            logger.error(f"Error during executing task from model assigned for easy task: {e}")
+            logger.error(f"Error during easy_task: {e}")
             raise
