@@ -3,6 +3,8 @@ routes it to a model, and logs the conversation to the database."""
 
 from src.services.hf.factory import make_huggingface_client
 from src.services.groq.factory import make_groq_client
+from src.services.ollama.factory import make_ollama_client
+
 from src.database import get_db_session, get_database
 from src.repositories.request_log import LogsRepository
 from src.schemas.ai_model import LogsCreate
@@ -16,29 +18,32 @@ def main():
     # At this point PostgreSQLDatabase.startup() has been called via the factory
 
     # Initialize model clients
-    hf_client = make_huggingface_client()
+    #hf_client = make_huggingface_client()
     groq_client = make_groq_client()
-
+    ollama_client = make_ollama_client()
     print("Chat started (single demo run).")
 
     user_query = "If I have 3 apples and buy 5 more, then give away 2, how many do I have?"
 
     # 1) Classify
-    raw_cls = hf_client.classify(user_query)
-    cls_text = raw_cls.lower().strip()
+    cls_text = ollama_client.classify(user_query)
+    cls_text = cls_text.lower().strip()
+    print(cls_text)
 
-    if "simple" in cls_text:
+    if cls_text == "simple":
         difficulty = "simple"
-    elif "medium" in cls_text:
+    elif cls_text =="medium":
         difficulty = "medium"
-    elif "complex" in cls_text:
+    elif cls_text == "complex" :
         difficulty = "complex"
     else:
-        difficulty = "medium"  # safe default
+         difficulty = "medium"  # safe default
 
+    print("..............")
+    print(difficulty)
     # 2) Route to model
     if difficulty == "simple":
-        response = hf_client.easy_task(user_query)
+        response = ollama_client.easy_task(user_query)
         model_name = "HF Model (Simple)"
     elif difficulty == "medium":
         response = groq_client.medium_task(user_query)
