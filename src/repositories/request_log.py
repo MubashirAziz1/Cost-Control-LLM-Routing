@@ -1,4 +1,5 @@
 from typing import List, Optional
+import uuid
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -7,11 +8,18 @@ from src.schemas.ai_model import LogsCreate
 
 
 class LogsRepository:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, session_id: str = None):
         self.session = session
+        self.session_id = session_id or str(uuid.uuid4())
+        self.sequence_counter = 0
 
     def create(self, logs: LogsCreate) -> Info_Logs:
-        db_logs = Info_Logs(**logs.model_dump())
+
+        self.sequence_counter += 1
+
+        db_logs = Info_Logs(id = self.session_id, 
+                            sequence = self.sequence_counter, 
+                            **logs.model_dump())
         self.session.add(db_logs)
         self.session.commit()
         self.session.refresh(db_logs)
@@ -27,6 +35,18 @@ class LogsRepository:
     def get_count(self) -> int:
         stmt = select(func.count(Info_Logs.sequence))
         return self.session.scalar(stmt) or 0
+    
+    def delete_all(self) -> int:
+        """Delete all logs for the current session."""
+        deleted_count = (
+            self.session.query(Info_Logs)
+            .filter(Info_Logs.id == self.session_id)
+            .delete()
+        )
+        self.session.commit()
+        return deleted_count
+    
+
 
 
 

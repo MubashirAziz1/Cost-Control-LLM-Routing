@@ -9,7 +9,8 @@ class Info_Logs(Base):
     __tablename__ = "info"
 
     # Core Data Columns
-    sequence = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    sequence = Column(Integer, nullable=False)
     prompt = Column(String, nullable=False)
     llm_response = Column(String)
     difficulty = Column(String)

@@ -1,6 +1,3 @@
-"""Simple interactive script that classifies each user message,
-routes it to a model, and logs the conversation to the database."""
-
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -9,7 +6,9 @@ import uvicorn
 from fastapi import FastAPI
 from src.config import get_settings
 from src.db.factory import make_database
+from src.dependencies import get_db_session
 from src.router import ping, route
+from src.repositories.request_log import LogsRepository
 
 
 # Setup logging
@@ -37,7 +36,18 @@ async def lifespan(app: FastAPI):
     logger.info("API ready")
     yield
 
-    # Cleanup
+    # Cleanup - Delete all logs before shutting down
+    logger.info("Cleaning up logs...")
+    try:
+        db = database.session_factory()
+        try:
+            repo = LogsRepository(db)
+            deleted_count = repo.delete_all()
+            logger.info(f"Deleted {deleted_count} log records")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Failed to cleanup logs: {e}")
     database.teardown()
     logger.info("API shutdown complete")
 

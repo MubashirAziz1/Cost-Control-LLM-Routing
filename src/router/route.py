@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Header, status
 from sqlalchemy.orm import Session
 
 from src.services.groq.factory import make_groq_client
@@ -64,13 +64,16 @@ def route(
     db: Session = Depends(get_db_session),
 ):
     """
-    POST /ai/prompt
+    POST /route
+
+    Headers:
+        X-Session-ID: <unique session identifier>
 
     Body:
         { "prompt": "<user question>" }
 
     Returns:
-        { "difficulty": "...", "model_name": "...", "response": "..." }
+        { "llm_response": "..." }
     """
 
     prompt = body.prompt
@@ -91,8 +94,8 @@ def route(
     model_name = route["model_name"]
     llm_response: str = handler(prompt)
 
-    # 3) Log ───────────────────────────────────────────────────────────
-    repo = LogsRepository(db)
+    # 3) Log with session ID ───────────────────────────────────────────
+    repo = LogsRepository(db, session_id=session_id)  # ← Pass session_id to repository
     log_entry = LogsCreate(
         model_name=model_name,
         difficulty=difficulty,
