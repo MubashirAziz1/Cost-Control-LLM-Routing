@@ -32,16 +32,6 @@ class ModelSettings(BaseConfigSettings):
     MEDIUM: str = ""
     COMPLEX: str = ""
 
-class HuggingFaceSettings(BaseConfigSettings):
-    model_config = SettingsConfigDict(
-        env_file=[".env", str(ENV_FILE_PATH)],
-        env_prefix="HF__",
-        extra="ignore",
-        frozen=True,
-        case_sensitive=False,
-    )
-
-    TOKEN: str = ""
 
 class GroqSettings(BaseConfigSettings):
     model_config = SettingsConfigDict(
@@ -53,18 +43,6 @@ class GroqSettings(BaseConfigSettings):
     )
 
     API_KEY: str = ""
-
-class OpenAISettings(BaseConfigSettings):
-    model_config = SettingsConfigDict(
-        env_file=[".env", str(ENV_FILE_PATH)],
-        env_prefix="OPENAI__",
-        extra="ignore",
-        frozen=True,
-        case_sensitive=False,
-    )
-
-    API_KEY: str = ""
-    BASE_URL: str = ""
 
 
 class Settings(BaseConfigSettings):
@@ -79,10 +57,7 @@ class Settings(BaseConfigSettings):
     postgres_max_overflow: int = 0
 
     models: ModelSettings = Field(default_factory=ModelSettings)
-    huggingface: HuggingFaceSettings = Field(default_factory=HuggingFaceSettings)
     groq: GroqSettings = Field(default_factory=GroqSettings)
-    openai: OpenAISettings = Field(default_factory=OpenAISettings)
-
 
 
 def get_settings() -> Settings:
