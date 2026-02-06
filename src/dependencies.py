@@ -1,19 +1,10 @@
 from functools import lru_cache
 from typing import TYPE_CHECKING, Annotated, Generator, Optional
-
-if TYPE_CHECKING:
-    from fastapi import Depends, Request
-    from sqlalchemy.orm import Session
-else:
-    try:
-        from fastapi import Depends, Request
-        from sqlalchemy.orm import Session
-    except ImportError:
-        pass
+from fastapi import Depends, Request
+from sqlalchemy.orm import Session
 
 from src.config import Settings
 from src.db.interfaces.base import BaseDatabase
-from src.services.ollama.client import Ollama_Client
 
 
 @lru_cache
