@@ -4,9 +4,14 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
 from src.config import get_settings
 from src.db.factory import make_database
-from src.dependencies import get_db_session
+from src.services.ollama.factory import make_ollama_client
+from src.services.groq.factory import make_groq_client
 from src.router import ping, route
 from src.repositories.request_log import LogsRepository
 
@@ -15,8 +20,10 @@ from src.repositories.request_log import LogsRepository
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    filename= 'app.log'
 )
 logger = logging.getLogger(__name__)
+
 
 
 @asynccontextmanager
@@ -33,21 +40,14 @@ async def lifespan(app: FastAPI):
     app.state.database = database
     logger.info("Database connected")
 
+    app.state.ollama_client = make_ollama_client
+    app.state.groq_client = make_groq_client
+    logging.info("Services initialized: Ollama , Groq API")
+
     logger.info("API ready")
     yield
 
-    # Cleanup - Delete all logs before shutting down
-    logger.info("Cleaning up logs...")
-    try:
-        db = database.session_factory()
-        try:
-            repo = LogsRepository(db)
-            deleted_count = repo.delete_all()
-            logger.info(f"Deleted {deleted_count} log records")
-        finally:
-            db.close()
-    except Exception as e:
-        logger.error(f"Failed to cleanup logs: {e}")
+
     database.teardown()
     logger.info("API shutdown complete")
 
@@ -57,30 +57,35 @@ app = FastAPI(
     description="Cost Controlled Router for the agencies.",
     version=os.getenv("APP_VERSION", "0.1.0"),
     lifespan=lifespan,
-) 
-
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["POST"],
-    allow_headers=["Content-Type"],
 )
 
+# IMPORTANT: Configure CORS middleware BEFORE including routers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],  # List all possible frontend origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],  # Allow all headers
+    expose_headers=["*"],  # Expose all headers to frontend
+)
+
+# Serve static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include routers
-app.include_router(ping.router) 
-app.include_router(route.router) 
+app.include_router(ping.router)
+app.include_router(route.router)
 
-from fastapi.staticfiles import StaticFiles
+# Serve index.html 
+@app.get("/")
+async def serve_index():
+    return FileResponse("static/index.html")
 
-app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
     uvicorn.run(app, port=8000, host="0.0.0.0")
-
-
-
-
-

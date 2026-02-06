@@ -16,7 +16,9 @@ class Ollama_Client:
     
     def __init__(self, settings: Settings):
         """Initialize the Ollama client."""
-        self.model_name = settings.models.CLASSIFIER  # Phi 3 Mini model
+        self.model_name = settings.models.CLASSIFIER  
+        self.simple_task = settings.models.SIMPLE
+
         self.prompt_builder = PromptClassification()
         self._initialized = True
     
@@ -99,7 +101,7 @@ class Ollama_Client:
 
         try:
             stream = ollama.chat(
-                model=self.model_name,
+                model=self.simple_task,
                 messages=messages,
                 stream=True,
             )

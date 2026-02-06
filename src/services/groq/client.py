@@ -1,5 +1,4 @@
 import logging
-import torch
 from groq import Groq
 
 from src.config import Settings
@@ -10,7 +9,9 @@ class GROQ_Client:
     
     def __init__(self, settings: Settings):
         """Initialize the classifier model."""
-        self.model_name = settings.models.MEDIUM
+        self.medium_model_name = settings.models.MEDIUM
+        self.complex_model_name = settings.models.COMPLEX
+
         self.api_key = settings.groq.API_KEY
     
     
@@ -18,19 +19,14 @@ class GROQ_Client:
         """
         Make a response to the user query
 
-        Args:
-            prompt: User prompt 
-            
-        Returns:
-            str: Response from model
         """
         
         try:
             # Use chat template 
-            client = Groq(self.api_key)
+            client = Groq(api_key=self.api_key)
             
             completion = client.chat.completions.create(
-                model = self.model_name,
+                model = self.medium_model_name,
                 messages=[
                 {
                     "role": "user",
@@ -41,6 +37,31 @@ class GROQ_Client:
             return completion.choices[0].message.content.strip()
         except Exception as e:
             logger.error(f"Error during executing respose from model assigned to medium task: {e}")
+            raise
+
+    def complex_task(self, user_prompt: str) -> str:
+        """
+        Make a response to the user query
+
+        """
+        
+        try:
+            # Use chat template 
+            client = Groq(api_key=self.api_key)
+            
+            completion = client.chat.completions.create(
+                model = self.complex_model_name,
+                messages=[
+                {
+                    "role": "user",
+                    "content": f"{user_prompt}"
+                }
+                ]
+            )
+            
+            return completion.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"Error during executing respose from model assigned to complex task: {e}")
             raise
 
 

@@ -13,21 +13,22 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:          #0c0e12;
-    --surface:     #141821;
-    --surface-hi:  #1c2030;
-    --border:      #2a2f3e;
-    --text:        #c8cdd8;
-    --text-dim:    #5a6070;
-    --accent:      #e8f04a;
-    --accent-dim:  rgba(232,240,74,.15);
-    --easy:        #4ade80;
-    --easy-bg:     rgba(74,222,128,.12);
-    --medium:      #fb923c;
-    --medium-bg:   rgba(251,146,60,.12);
-    --complex:     #f87171;
-    --complex-bg:  rgba(248,113,113,.12);
-    --radius:      10px;
+    --bg:          #f5f7fa;
+    --surface:     #ffffff;
+    --surface-hi:  #fafbfc;
+    --border:      #e1e4e8;
+    --text:        #24292e;
+    --text-dim:    #6a737d;
+    --accent:      #0366d6;
+    --accent-dim:  rgba(3,102,214,.1);
+    --easy:        #28a745;
+    --easy-bg:     rgba(40,167,69,.1);
+    --medium:      #f66a0a;
+    --medium-bg:   rgba(246,106,10,.1);
+    --complex:     #d73a49;
+    --complex-bg:  rgba(215,58,73,.1);
+    --radius:      8px;
+    --sidebar:     #fafbfc;
   }
 
   html { font-size: 16px; }
@@ -37,16 +38,115 @@
     color: var(--text);
     min-height: 100vh;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 48px 20px 80px;
     line-height: 1.6;
+    margin: 0;
   }
 
-  /* ─── layout shell ─────────────────────────────────────────────── */
-  .shell {
+  /* ─── layout ───────────────────────────────────────────────────── */
+  .container {
+    display: flex;
     width: 100%;
-    max-width: 720px;
+    min-height: 100vh;
+  }
+
+  /* ─── sidebar ──────────────────────────────────────────────────── */
+  .sidebar {
+    width: 280px;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-dim);
+  }
+  .clear-btn {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: .7rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color .2s;
+    padding: 4px 8px;
+  }
+  .clear-btn:hover { color: var(--complex); }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    animation: fadeUp .2s ease;
+    transition: box-shadow .2s;
+  }
+  .history-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  .history-item .h-prompt {
+    font-size: .72rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+  .history-item .h-response {
+    font-size: .75rem;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-dim);
+    font-size: .75rem;
+    font-style: italic;
+  }
+
+  /* ─── main content ─────────────────────────────────────────────── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px;
+    overflow-y: auto;
+  }
+
+  .content {
+    width: 100%;
+    max-width: 680px;
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -56,22 +156,23 @@
   .header {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+    text-align: center;
+    padding: 24px 0;
   }
   .header h1 {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
-    font-size: 2rem;
-    color: #fff;
-    letter-spacing: -0.03em;
+    font-size: 2.5rem;
+    color: var(--text);
+    letter-spacing: -0.02em;
     line-height: 1.1;
   }
   .header h1 span { color: var(--accent); }
   .header p {
-    font-size: .78rem;
+    font-size: .82rem;
     color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: .14em;
+    letter-spacing: .02em;
   }
 
   /* ─── input card ───────────────────────────────────────────────── */
@@ -79,7 +180,8 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 24px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
   }
 
   .input-row {
@@ -92,45 +194,48 @@
     flex: 1;
     resize: vertical;
     min-height: 80px;
-    background: var(--bg);
+    background: var(--surface-hi);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    color: #fff;
+    color: var(--text);
     font-family: inherit;
-    font-size: .85rem;
+    font-size: .88rem;
     padding: 14px 16px;
     outline: none;
-    transition: border-color .2s;
+    transition: border-color .2s, box-shadow .2s;
   }
-  textarea:focus { border-color: var(--accent); }
+  textarea:focus { 
+    border-color: var(--accent); 
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
   textarea::placeholder { color: var(--text-dim); }
 
   .btn {
     flex-shrink: 0;
     background: var(--accent);
-    color: var(--bg);
+    color: #fff;
     border: none;
     border-radius: var(--radius);
     font-family: 'Syne', sans-serif;
     font-weight: 700;
     font-size: .82rem;
     text-transform: uppercase;
-    letter-spacing: .1em;
+    letter-spacing: .06em;
     padding: 14px 24px;
     cursor: pointer;
-    transition: opacity .2s, transform .1s;
+    transition: background .2s, transform .1s;
     align-self: stretch;
   }
-  .btn:hover { opacity: .85; }
-  .btn:active { transform: scale(.96); }
-  .btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+  .btn:hover { background: #0256c2; }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
   /* ─── status bar ───────────────────────────────────────────────── */
   .status-bar {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 14px;
+    margin-top: 12px;
     min-height: 22px;
   }
   .spinner {
@@ -164,41 +269,6 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* meta row: badge + model name */
-  .meta-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: .7rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    padding: 5px 10px;
-    border-radius: 20px;
-  }
-  .badge .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-  }
-  .badge.simple   { background: var(--easy-bg);    color: var(--easy);    }
-  .badge.simple .dot   { background: var(--easy); }
-  .badge.medium   { background: var(--medium-bg);  color: var(--medium);  }
-  .badge.medium .dot   { background: var(--medium); }
-  .badge.complex  { background: var(--complex-bg); color: var(--complex); }
-  .badge.complex .dot  { background: var(--complex); }
-
-  .model-tag {
-    font-size: .72rem;
-    color: var(--text-dim);
-  }
-
-  /* response text */
   .response-text {
     font-size: .88rem;
     color: var(--text);
@@ -210,8 +280,8 @@
   /* ─── error toast ──────────────────────────────────────────────── */
   .error-toast {
     display: none;
-    background: rgba(248,113,113,.1);
-    border: 1px solid rgba(248,113,113,.3);
+    background: var(--complex-bg);
+    border: 1px solid var(--complex);
     border-radius: var(--radius);
     padding: 14px 18px;
     font-size: .78rem;
@@ -220,114 +290,62 @@
   }
   .error-toast.visible { display: block; }
 
-  /* ─── history ──────────────────────────────────────────────────── */
-  .history-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .history-header h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: .75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .13em;
-    color: var(--text-dim);
-  }
-  .clear-btn {
-    background: none;
-    border: none;
-    font-family: inherit;
-    font-size: .7rem;
-    color: var(--text-dim);
-    cursor: pointer;
-    transition: color .2s;
-  }
-  .clear-btn:hover { color: var(--complex); }
-
-  .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .history-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    animation: fadeUp .2s ease;
-  }
-  .history-item .h-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .history-item .h-prompt {
-    font-size: .78rem;
-    color: var(--text-dim);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .history-item .h-response {
-    font-size: .8rem;
-    color: var(--text);
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-
-  /* empty state */
-  .empty-state {
-    text-align: center;
-    padding: 28px 0;
-    color: var(--text-dim);
-    font-size: .75rem;
-    font-style: italic;
+  /* ─── responsive ───────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .sidebar {
+      display: none;
+    }
+    .header h1 {
+      font-size: 2rem;
+    }
   }
 </style>
 </head>
 <body>
 
-<div class="shell">
-
-  <!-- header -->
-  <div class="header">
-    <h1>LLM <span>Router</span></h1>
-    <p>Cost-controlled model routing · classify → route → respond</p>
-  </div>
-
-  <!-- input -->
-  <div class="card">
-    <div class="input-row">
-      <textarea id="promptInput" placeholder="Ask me anything…" rows="3"></textarea>
-      <button class="btn" id="sendBtn">Send</button>
-    </div>
-    <div class="status-bar">
-      <div class="spinner" id="spinner"></div>
-      <span class="status-text" id="statusText"></span>
-    </div>
-  </div>
-
-  <!-- error -->
-  <div class="error-toast" id="errorToast"></div>
-
-  <!-- live response -->
-  <div class="response-card card" id="responseCard">
-    <div class="response-text" id="responseText"></div>
-  </div>
-
-  <!-- history -->
-  <div style="display:flex;flex-direction:column;gap:10px;">
+<div class="container">
+  
+  <!-- sidebar with history -->
+  <div class="sidebar">
     <div class="history-header">
       <h3>History</h3>
       <button class="clear-btn" id="clearBtn">Clear</button>
     </div>
     <div class="history-list" id="historyList">
-      <div class="empty-state" id="emptyState">No previous queries yet.</div>
+      <div class="empty-state" id="emptyState">No queries yet</div>
+    </div>
+  </div>
+
+  <!-- main content area -->
+  <div class="main">
+    <div class="content">
+
+      <!-- centered header -->
+      <div class="header">
+        <h1>LLM <span>Router</span></h1>
+        <p>Cost-controlled model routing · classify → route → respond</p>
+      </div>
+
+      <!-- input -->
+      <div class="card">
+        <div class="input-row">
+          <textarea id="promptInput" placeholder="Ask me anything…" rows="3"></textarea>
+          <button class="btn" id="sendBtn">Send</button>
+        </div>
+        <div class="status-bar">
+          <div class="spinner" id="spinner"></div>
+          <span class="status-text" id="statusText"></span>
+        </div>
+      </div>
+
+      <!-- error -->
+      <div class="error-toast" id="errorToast"></div>
+
+      <!-- live response -->
+      <div class="response-card card" id="responseCard">
+        <div class="response-text" id="responseText"></div>
+      </div>
+
     </div>
   </div>
 
@@ -335,7 +353,9 @@
 
 <script>
 // ─── config ───────────────────────────────────────────────────────────────
-const API_URL = "http://127.0.0.1:8000/route";
+// ─── config ───────────────────────────────────────────────────────────────
+// Use relative URL since both are on same port now
+const API_URL = "/route";
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────
 const promptInput   = document.getElementById("promptInput");
@@ -422,12 +442,21 @@ async function send() {
       headers: { 
         "Content-Type": "application/json"
       },
+      credentials: "include",  // This will send cookies
       body: JSON.stringify({ prompt }),
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Server error ${res.status}`);
+      let errorMsg = `Server error ${res.status}`;
+      try {
+        const err = await res.json();
+        errorMsg = err.detail || errorMsg;
+      } catch (e) {
+        // If response is not JSON, get text
+        const text = await res.text();
+        if (text) errorMsg = text;
+      }
+      throw new Error(errorMsg);
     }
 
     const data = await res.json();
@@ -440,6 +469,7 @@ async function send() {
   } catch (e) {
     statusText.textContent = "";
     showError(e.message || "Something went wrong.");
+    console.error("Fetch error:", e);
   } finally {
     setLoading(false);
   }
