@@ -113,4 +113,47 @@ def route(
         llm_response=llm_response,
     )
 
+@router.post(
+    "/heartbeat",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Keep Session Alive",
+    description="Update session activity timestamp to prevent timeout",
+    tags=["Session Management"]
+)
+def heartbeat(
+    db: Session = Depends(get_db_session),
+    session_id: str = Cookie(default=None),
+):
+    """
+    Frontend calls this periodically to keep the session active.
+    Updates last_activity timestamp.
+    """
+    if session_id:
+        repo = LogsRepository(db, session_id=session_id)
+        repo._update_session_activity()
+        logging.debug(f"Heartbeat received for session {session_id}")
+    return None
+
+
+@router.post(
+    "/session/end",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="End Session Immediately",
+    description="Delete all logs for the current session when user closes tab",
+    tags=["Session Management"]
+)
+def end_session(
+    db: Session = Depends(get_db_session),
+    session_id: str = Cookie(default=None),
+):
+    """
+    Called when user closes the browser tab.
+    Immediately deletes all session data.
+    """
+    if session_id:
+        repo = LogsRepository(db, session_id=session_id)
+        deleted = repo.delete_all()
+        logging.info(f"Session ended by user - deleted {deleted} logs for session {session_id}")
+    return None
+
 

@@ -14,6 +14,8 @@ from src.services.ollama.factory import make_ollama_client
 from src.services.groq.factory import make_groq_client
 from src.router import ping, route
 from src.repositories.request_log import LogsRepository
+from src.tasks.cleanup import start_cleanup_task  # ← ADD THIS IMPORT
+
 
 
 # Setup logging
@@ -43,6 +45,14 @@ async def lifespan(app: FastAPI):
     app.state.ollama_client = make_ollama_client
     app.state.groq_client = make_groq_client
     logging.info("Services initialized: Ollama , Groq API")
+
+    # ===== START BACKGROUND CLEANUP TASK ===== ← ADD THIS SECTION
+    start_cleanup_task(
+        inactive_minutes=2,        # Delete sessions inactive for 30+ minutes
+        check_interval_seconds=30  # Check every 5 minutes (300 seconds)
+    )
+    logger.info("Background cleanup task started")
+    # =========================================
 
     logger.info("API ready")
     yield
