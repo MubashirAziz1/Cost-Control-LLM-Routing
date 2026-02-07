@@ -39,6 +39,7 @@ class LogsRepository:
     
     def _update_session_activity(self):
         """Update last_activity timestamp for current session."""
+
         self.session.query(Info_Logs).filter(
             Info_Logs.session_id == self.session_id
         ).update({"last_activity": datetime.now(timezone.utc)})
@@ -46,11 +47,17 @@ class LogsRepository:
 
 
     def get_recent_logs(self, limit: int = 5) -> list[Info_Logs]:
-        """ Retrieve the most recent logs from the current session. """
-
-        logs = self.session.query(Info_Logs).order_by(Info_Logs.sequence.asc()).all()
-        return logs[-limit:] if len(logs) > limit else logs
-    
+        """ Retrieve the most recent logs from the current session in chronological order. """
+        logs = (
+            self.session.query(Info_Logs)
+            .filter(Info_Logs.session_id == self.session_id)
+            .order_by(Info_Logs.sequence.desc())  
+            .limit(limit)  
+            .all()
+        )
+        
+        # Reverse to get chronological order 
+        return list(reversed(logs))
 
     def get_count(self) -> int:
         stmt = select(func.count(Info_Logs.sequence))

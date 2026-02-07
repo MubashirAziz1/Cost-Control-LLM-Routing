@@ -81,6 +81,16 @@ def route(
     
     prompt = body.prompt
 
+    
+    # Add the logs to the Postgresql DB
+    repo = LogsRepository(db, session_id = session_id) 
+    recent_logs = repo.get_recent_logs(limit=5)
+    
+    if recent_logs:
+        logging.info(f"Found {len(recent_logs)} previous messages for context")
+    else:
+        logging.info("No previous conversation history found")
+    
     # Classify the prompt into valid labels.
     raw_label = ollama_client.classify(prompt)
     difficulty = parse_difficulty(raw_label)
@@ -96,10 +106,10 @@ def route(
 
     handler = route["handler"]
     model_name = route["model_name"]
-    llm_response: str = handler(prompt)
+    llm_response: str = handler(prompt, recent_logs=recent_logs)
+    
 
-    # Add the logs to the Postgresql DB
-    repo = LogsRepository(db, session_id = session_id)  
+
     log_entry = LogsCreate(
         model_name=model_name,
         difficulty=difficulty,

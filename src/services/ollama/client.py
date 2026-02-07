@@ -55,6 +55,39 @@ class Ollama_Client:
         except Exception as e:
             logger.error(f"Failed to pull model: {e}")
             raise
+
+    def _build_messages_with_history(self, current_prompt: str, recent_logs: list = None) -> list:
+        """
+        Build message array with conversation history.
+            
+        Returns:
+            List of message dictionaries for the API
+        """
+        messages = []
+        
+        # Add conversation history if available
+        if recent_logs:
+            for log in recent_logs:
+                # Add previous user message
+                messages.append({
+                    "role": "user",
+                    "content": log.prompt
+                })
+                # Add previous assistant response
+                messages.append({
+                    "role": "assistant",
+                    "content": log.llm_response
+                })
+            
+            logger.info(f"Added {len(recent_logs)} previous exchanges to context")
+        
+        # Add current user message
+        messages.append({
+            "role": "user",
+            "content": current_prompt
+        })
+        
+        return messages
     
     def classify(self, user_prompt: str) -> str:
         """
@@ -90,13 +123,10 @@ class Ollama_Client:
             logger.warning("Defaulting to medium difficulty due to classification error")
             return "medium"
 
-    def easy_task(self, user_prompt: str) -> str:
+    def easy_task(self, user_prompt: str, recent_logs: list = None) -> str:
         self._initialize_model()
-
-        messages = [
-            {"role": "system", "content": "You are a helpful AI assistant."},
-            {"role": "user", "content": user_prompt},
-        ]
+        messages = self._build_messages_with_history(user_prompt, recent_logs)
+        
         full_response = ""
 
         try:
