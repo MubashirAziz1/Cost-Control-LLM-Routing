@@ -7,27 +7,10 @@ A production-ready FastAPI service that intelligently routes user prompts to dif
 The service uses a two-stage approach:
 1. **Classification**: A Phi-3 mini model classifies prompts as `simple`, `medium`, or `complex`
 2. **Generation**: Based on classification, routes to:
-   - **Simple** → Phi-3 mini (fast, cost-effective)
+   - **Simple** → Phi-3 mini (fast, cost-effective) 
    - **Medium** → Llama 3 70B (balanced performance)
-   - **Complex** → GPT-4o (highest quality)
+   - **Complex** → GPT-OSS 120B (highest quality) 
 
-## Project Structure
-
-```
-Cost_Controller/
-├── api/
-│   └── main.py              # FastAPI application
-├── router/
-│   ├── classifier.py        # Prompt classification logic
-│   ├── generator.py         # Model generation logic
-│   └── router.py            # Routing orchestration
-├── models/
-│   └── schemas.py           # Pydantic schemas
-├── config.py                # Configuration settings
-├── main.py                  # Server entry point
-├── pyproject.toml           # Dependencies (uv)
-└── README.md
-```
 
 ## Setup
 
@@ -35,8 +18,8 @@ Cost_Controller/
 
 - Python 3.10+
 - [uv](https://github.com/astral-sh/uv) package manager
-- Hugging Face token (for accessing models)
-- OpenAI API key (for GPT-4o)
+- Groq API key 
+- Ollama Application
 
 ### Installation
 
@@ -49,21 +32,20 @@ Cost_Controller/
    ```bash
    uv venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   uv pip install -e .
+   uv sync
    ```
 
 3. **Set up environment variables**:
    Create a `.env` file in the project root:
    ```env
    # Required
-   OPENAI_API_KEY=your_openai_api_key_here
-   HF_TOKEN=your_huggingface_token_here
+   GROQ_API_KEY=your_groq_api_key_here
    
    # Optional (defaults provided)
    CLASSIFIER_MODEL=microsoft/Phi-3-mini-4k-instruct
    SIMPLE_MODEL=microsoft/Phi-3-mini-4k-instruct
    MEDIUM_MODEL=meta-llama/Llama-3-70b-chat-hf
-   COMPLEX_MODEL=gpt-4o
+   COMPLEX_MODEL=gpt-oss-120b
    HOST=0.0.0.0
    PORT=8000
    LOG_LEVEL=INFO
@@ -71,14 +53,9 @@ Cost_Controller/
 
 ## Running the Server
 
-### Option 1: Using the main.py entry point
+###  Using uvicorn directly
 ```bash
-python main.py
-```
-
-### Option 2: Using uvicorn directly
-```bash
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn api.main:app --reload
 ```
 
 The server will start at `http://localhost:8000`
@@ -87,7 +64,7 @@ The server will start at `http://localhost:8000`
 
 ### Generate Endpoint
 
-**POST** `/generate`
+**POST** `/route`
 
 **Request Body:**
 ```json
@@ -99,63 +76,27 @@ The server will start at `http://localhost:8000`
 **Response:**
 ```json
 {
+  "session_id": "rg098hjb873b",
+  "sequence": 1,
+  "prompt": "What is the capital of France?",
   "response": "The capital of France is Paris.",
   "model_name": "microsoft/Phi-3-mini-4k-instruct",
   "difficulty": "simple"
 }
 ```
 
-### Example with cURL
-
-```bash
-curl -X POST "http://localhost:8000/generate" \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Explain quantum computing in simple terms"}'
-```
-
-### Example with Python
-
-```python
-import requests
-
-response = requests.post(
-    "http://localhost:8000/generate",
-    json={"prompt": "Write a Python function to calculate fibonacci numbers"}
-)
-
-data = response.json()
-print(f"Model: {data['model_name']}")
-print(f"Difficulty: {data['difficulty']}")
-print(f"Response: {data['response']}")
-```
-
 ## API Documentation
 
 Once the server is running, visit:
 - **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
 
 ## Design Decisions
 
 1. **Modular Architecture**: Separate layers for API, routing, classification, and generation for easy maintenance and testing
 2. **Lazy Loading**: Models are loaded only when needed to reduce memory usage
-3. **Scalable Design**: Code structure allows easy addition of database and memory layers in the future
-4. **Error Handling**: Comprehensive error handling with logging
+3. **PostGreSQL Database**: PostgreSql database is connected to maintain the logs and use it for conversational history
+4. **Scalable Design**: Code structure allows easy addition of database and memory layers in the future
 5. **Type Safety**: Uses Pydantic for request/response validation
 
-## Future Enhancements
 
-The codebase is designed to be easily extended with:
-- PostgreSQL database integration
-- Memory/conversation history
-- Caching layer
-- Rate limiting
-- Authentication/authorization
-- Metrics and monitoring
 
-## Notes
-
-- Models are loaded lazily (on first use) to optimize startup time
-- GPU support is automatic if CUDA is available
-- The classifier model only classifies and does not generate the final response
-- All models receive only the user prompt (no context or memory)
