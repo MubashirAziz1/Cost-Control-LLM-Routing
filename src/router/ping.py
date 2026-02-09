@@ -3,7 +3,6 @@ from sqlalchemy import text
 
 from src.dependencies import DatabaseDep, SettingsDep
 from src.schemas.api_health import HealthResponse, ServiceStatus
-from src.services.ollama.client import Ollama_Client
 
 router = APIRouter()
 
@@ -23,13 +22,7 @@ async def ping():
     tags=["Health"],
 )
 def health_check(settings: SettingsDep, database: DatabaseDep) -> HealthResponse:
-    """
-    Comprehensive health check endpoint for monitoring.
-
-    Returns:
-        HealthResponse: Contains service status, version, environment, and service checks
-
-    """
+    """ Comprehensive health check endpoint for monitoring. """
     services = {}
     overall_status = "ok"
 

@@ -31,10 +31,6 @@ class BaseRepository(ABC):
         """Create a new record."""
 
     @abstractmethod
-    def get_by_id(self, record_id: Any) -> Optional[Any]:
-        """Get a record by ID."""
-
-    @abstractmethod
     def update(self, record_id: Any, data: Dict[str, Any]) -> Optional[Any]:
         """Update a record by ID."""
 
@@ -42,6 +38,3 @@ class BaseRepository(ABC):
     def delete(self, record_id: Any) -> bool:
         """Delete a record by ID."""
 
-    @abstractmethod
-    def list(self, limit: int = 100, offset: int = 0) -> List[Any]:
-        """List records with pagination."""

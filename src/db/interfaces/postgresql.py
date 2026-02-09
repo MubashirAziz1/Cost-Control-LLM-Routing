@@ -51,7 +51,7 @@ class PostgreSQLDatabase(BaseDatabase):
                 echo=self.config.echo_sql,
                 pool_size=self.config.pool_size,
                 max_overflow=self.config.max_overflow,
-                pool_pre_ping=True,  # Verify connections before use
+                pool_pre_ping=True,
             )
 
             self.session_factory = sessionmaker(bind=self.engine, expire_on_commit=False)

@@ -353,8 +353,6 @@
 
 <script>
 // ─── config ───────────────────────────────────────────────────────────────
-// ─── config ───────────────────────────────────────────────────────────────
-// Use relative URL since both are on same port now
 const API_URL = "/route";
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────
@@ -442,7 +440,7 @@ async function send() {
       headers: { 
         "Content-Type": "application/json"
       },
-      credentials: "include",  // This will send cookies
+      credentials: "include",
       body: JSON.stringify({ prompt }),
     });
 
@@ -491,71 +489,6 @@ clearBtn.addEventListener("click", () => {
   renderHistory();
 });
 </script>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cost Controlled LLM Router</title>
-    <!-- Your existing CSS and head content -->
-</head>
-<body>
-    <!-- Your existing HTML content -->
-    
-    
-    <!-- ===== ADD THIS SCRIPT SECTION ===== -->
-    <script>
-        // Session management: heartbeat and cleanup
-        let heartbeatInterval;
-
-        function startHeartbeat() {
-            console.log('Starting session heartbeat...');
-            
-            // Send a heartbeat every 5 minutes to keep session alive
-            heartbeatInterval = setInterval(() => {
-                fetch('/heartbeat', { 
-                    method: 'POST',
-                    credentials: 'include'  // Important: send session cookie
-                })
-                .then(() => console.log('Heartbeat sent'))
-                .catch(err => console.error('Heartbeat failed:', err));
-            }, 5 * 60 * 1000);  // 5 minutes in milliseconds
-        }
-
-        function stopHeartbeat() {
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-                console.log('Heartbeat stopped');
-            }
-        }
-
-        function endSession() {
-            // Use sendBeacon for reliable delivery even as page unloads
-            const sent = navigator.sendBeacon('/session/end');
-            console.log('Session end signal sent:', sent);
-        }
-
-        // Start heartbeat when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            startHeartbeat();
-        });
-
-        // Clean up when user closes tab or navigates away
-        window.addEventListener('beforeunload', function(e) {
-            stopHeartbeat();
-            endSession();
-        });
-
-        // Also handle visibility change (tab becomes hidden)
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                // Tab is now hidden - you could optionally end session here too
-                // endSession();
-            }
-        });
-    </script>
-    <!-- ================================== -->
 
 </body>
 </html>
